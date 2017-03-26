@@ -1,0 +1,591 @@
+from argparse import ArgumentParser
+import os
+import sys
+
+#Add argument to the parser
+#filename is required
+#--print stores in boolean type
+
+class ArgumentParser(ArgumentParser):    
+    def error(self, message):
+       print('I expect --file followed by filename and possibly -print as command line arguments.')
+       sys.exit()
+parser = ArgumentParser()
+parser.add_argument('--file', dest = 'filename', required = True)
+parser.add_argument('-print', action='store_true')
+args = parser.parse_args()
+filename = args.filename
+
+
+
+#find function used for find the coordinates of certain value
+#if couldnt find it , return (-1,-1)
+
+def find(a,b = 1000):
+    for i in range(len(clist)):
+        for j in range(len(clist[i])):
+            if clist[i][j] == a or clist[i][j] == b:
+                return (i,j)
+    return (-1,-1)
+
+
+
+#find2 function used for find the oordinates of certain values,three arguments
+#if couldnt find it , return (-1,-1)
+
+def find2(a,b,c):
+    for i in range(len(flist)):
+        for j in range(len(flist[i])):
+            if flist[i][j] == a or flist[i][j] == b or flist[i][j] == c:
+                return (i,j)
+    return (-1,-1)
+
+
+
+#findwall function is a recursive function used for finding the the walls
+#if the wall is detected already, set the value to other value in case visit again
+
+global num_wall
+num_wall = 0
+def findwall(i,j):   
+    if i != 0 and (flist[i-1][j] == 3 or flist[i-1][j] == 2):
+       #print('up')
+        flist[i][j] = -1
+        findwall(i-1,j)
+    if i != len(flist)-1 and (blist[i][j] == 2 or blist[i][j] == 3) and (flist[i+1][j] != 0 and flist[i+1][j] != -1):
+        #print('down')
+        flist[i][j] = -1
+        findwall(i+1,j)
+    if j != 0 and (flist[i][j-1] == 3 or flist[i][j-1] == 1):
+        #print('left')
+        flist[i][j] = -1
+        findwall(i,j-1)
+    if j != len(flist[i])-1 and (blist[i][j] == 1 or blist[i][j] == 3) and (flist[i][j+1] != 0 and flist[i][j+1] != -1):
+        #print('right')
+        flist[i][j] = -1
+        findwall(i,j+1)
+    if i != len(flist)-1 and j != 0 and (blist[i][j] == 2 or blist[i][j] == 3) and (flist[i+1][j-1] == 1 or flist[i+1][j-1] == 3):
+        #print('t')
+        flist[i][j] = -1
+        findwall(i+1,j-1)
+    if i != 0 and j != len(flist[i])-1 and (blist[i][j] == 1 or blist[i][j] == 3) and (flist[i-1][j+1] == 2 or flist[i-1][j+1] == 3):
+        #print('k')
+        flist[i][j] = -1
+        findwall(i-1,j+1)
+
+    flist[i][j] = -1
+
+
+
+#findaccess function is a recursive function used for finding the accessible areas
+#if the point is visited, change the value to find another one
+    
+global num_access
+num_access = 1000000
+global mark
+mark = 0
+def findaccess(i,j):
+    mark = 1
+    if clist[i][j] < 100000:
+        clist[i][j] = num_access
+        if i != 0 and clist[i-1][j] < 10000 and (blist[i][j] != 1 and blist[i][j] != 3):
+            findaccess(i-1,j)
+        if i != len(clist)-1 and clist[i+1][j] < 10000 and (blist[i+1][j] != 1 and blist[i+1][j] != 3):
+            findaccess(i+1,j)
+        if j != 0 and clist[i][j-1] < 10000 and (blist[i][j] != 2 and blist[i][j] != 3):
+            findaccess(i,j-1)
+        if j != len(clist[i])-1 and clist[i][j+1] < 10000 and (blist[i][j+1] != 2 and blist[i][j+1] != 3):
+            findaccess(i,j+1)   
+
+
+
+#findway function is a loop function used for changing the value next to 1
+#always find 1, and change the value to -1, the neighbour next to it should be deducted by 1
+#keep this doing until there are only -1, 2 and 3
+            
+def findway():
+    (i,j) = find(1)
+    while (i,j) != (-1,-1):
+       # print((i,j),clist)
+        if i != 0 and clist[i-1][j] > 1 and (blist[i][j] != 1 and blist[i][j] != 3):
+            clist[i-1][j] -= 1
+        elif i != len(clist)-1 and clist[i+1][j] > 1 and (blist[i+1][j] != 1 and blist[i+1][j] != 3):
+            clist[i+1][j] -= 1
+        elif j != 0 and clist[i][j-1] > 1 and (blist[i][j] != 2 and blist[i][j] != 3):
+            clist[i][j-1] -= 1
+        elif j != len(clist[i])-1 and clist[i][j+1] > 1 and (blist[i][j+1] != 2 and blist[i][j+1] != 3):
+            clist[i][j+1] -= 1
+        clist[i][j] = -1
+        (i,j) = find(1)
+
+
+
+#findpath function is a recursive function used for finding the path without any interactions
+#if the point is visited, change the value to find another one
+        
+def findpath(i,j,dlist):
+        dlist.append((i,j))
+        if (i,j) in gatelist and len(dlist) != 1:
+            path.append(dlist)
+            dlist = []
+        clist[i][j] = 5
+        if i != 0 and clist[i-1][j] == 2 and (blist[i][j] != 1 and blist[i][j] != 3):
+            findpath(i-1,j,dlist)
+        elif i != len(clist)-1 and clist[i+1][j] == 2 and (blist[i+1][j] != 1 and blist[i+1][j] != 3):
+            findpath(i+1,j,dlist)
+        elif j != 0 and clist[i][j-1] == 2 and (blist[i][j] != 2 and blist[i][j] != 3):
+            findpath(i,j-1,dlist)
+        elif j != len(clist[i])-1 and clist[i][j+1] == 2 and (blist[i][j+1] != 2 and blist[i][j+1] != 3):
+            findpath(i,j+1,dlist)
+        dlist = []
+
+
+
+
+#findarea function is a recursive function used for finding the accessible cul-de-sacs that are all connected
+#if the point is visited, change the value to find another one
+        
+global area_num
+area_num = 11            
+def findarea(i,j):
+        clist[i][j] = area_num
+        if i != 0 and clist[i-1][j] == -1 and (blist[i][j] != 1 and blist[i][j] != 3):
+            findarea(i-1,j)
+        if i != len(clist)-1 and clist[i+1][j] == -1 and (blist[i+1][j] != 1 and blist[i+1][j] != 3):
+            findarea(i+1,j)
+        if j != 0 and clist[i][j-1] == -1 and (blist[i][j] != 2 and blist[i][j] != 3):
+            findarea(i,j-1)
+        if j != len(clist[i])-1 and clist[i][j+1] == -1 and (blist[i][j+1] != 2 and blist[i][j+1] != 3):
+            findarea(i,j+1)
+        
+
+
+#open file with the name given in parser
+#blist is the grid, store the information of walls
+#flist is the copy of blist, because we might change the values of it
+#gate is the number of gates in the maze
+#a is a list storing the coordinates of gates
+#accessible_area stores the coordinates of pillars
+#this part is to generate the information of walls and calculate the number of walls and then store their coordinates
+#if condition is to decide if the surrouding of the matrix satisfy the requirment of gates
+#example: if in the first line a value equals to 2 or 0, it should be a gate
+            
+if not os.path.exists(filename):
+    print('Incorrect input')
+    sys.exit()
+with open(filename) as file:
+    wall = []   
+    blist = []
+    flist = []
+    for _ in file:
+        if _.strip() == '':
+            continue
+        _ =_.replace(' ','').replace('\n','')
+        alist = []
+        qlist = []
+        for i in _:
+            alist.append(int(i))
+        for i in range(len(alist)):
+            qlist.append(alist[i])
+        blist.append(alist)
+        flist.append(qlist)
+    ismatrix = len(blist[0])
+    for i in blist:
+        if len(i) != ismatrix:
+            print('Incorrect input')
+            sys.exit()
+    if len(blist) > 31 or len(blist) < 2:
+        print('Incorrect input')
+        sys.exit()
+    if len(blist[0]) > 41 or len(blist[0]) < 2:
+        print('Incorrect input')
+        sys.exit()
+    for i in blist[-1]:
+        if i == 2 or i == 3:
+            print('Incorrect input')
+            sys.exit()
+    for i in range(len(blist)):
+        if blist[i][-1] == 1 or blist[i][-1] == 3:
+            print('Incorrect input')
+            sys.exit()
+    gate = 0
+    a = []
+    accessible_area =[]
+    accessible_area_num = 0
+    for i in range(len(blist)):
+        for j in range(len(blist[i])):
+            if (i == 0 or i == len(blist)-1) and j != len(blist[i])-1:
+                if blist[i][j] == 0 or blist[i][j] == 2:
+                    a.append((i,j))
+                    gate += 1
+            if (j == 0 or j == len(blist[i])-1) and i != len(blist) -1:
+                if blist[i][j] == 1 or blist[i][j] == 0:
+                    a.append((i,j))
+                    gate += 1
+            if j != len(blist[i])-1 and i != len(blist) -1\
+               and (blist[i][j+1] == 0 or blist[i][j+1] == 1)\
+               and (blist[i+1][j] == 0 or blist[i+1][j] == 2)\
+               and (blist[i+1][j+1] == 0 or blist[i+1][j+1] == 0): 
+                accessible_area.append((i+1,j+1))
+                accessible_area_num += 1
+            if i == 0:
+                if (j == 0 and blist[i][j] == 0):
+                    accessible_area.append((0,0))
+                    accessible_area_num += 1
+                elif j != len(blist[i])-1\
+                    and(blist[i][j] == 0 or blist[i][j] == 2)\
+                    and (blist[i][j+1] == 0):
+                    accessible_area.append((i,j+1))
+                    accessible_area_num += 1
+            if j == 0  and i != len(blist)-1:
+                if (blist[i][j] == 0 or blist[i][j] == 1) and blist[i+1][j] == 0:
+                    accessible_area.append((i+1,j))
+                    accessible_area_num += 1
+    clist = [[0]*(len(blist[0])-1) for x in range(len(blist)-1)]
+    qlist = [[0]*(len(blist[0])-1) for x in range(len(blist)-1)]
+    mlist = [[0]*(len(blist[0])-1) for x in range(len(blist)-1)]
+
+
+
+#this part is to see how many ways could a point go
+#for example: the value of the point is 3, so it cannot go up or left, if the lower point equals to 2 and right point equals to 2, this point has only one way to go, so we change the value to 1
+#the value of the point is 1, so it cannot go up but can go left, if the lower point equals to 2 and right point equals to 1, this point has three way to go, so we change the value to 3
+
+    for i in range(len(clist)):
+        for j in range(len(clist[i])):
+            if i != len(blist)-1 and j != len(blist[i])-1:
+                clist[i][j] = 4
+                if blist[i][j] == 1 or blist[i][j] == 2:
+                    clist[i][j] -= 1
+                if blist[i][j] == 3:
+                    clist[i][j] -= 2
+                if (blist[i+1][j] == 1 or blist[i+1][j] == 3):
+                    clist[i][j] -= 1
+                if blist[i][j+1] == 2 or blist[i][j+1] == 3:
+                    clist[i][j] -= 1
+
+
+
+#findway is a recursive function we have mentioned before(all the recursive function can be found at the top)
+#this part is to change the value next to 1 and change the 1 to -1
+#if a point values 2 and is next to 1, we make dedution of 1 and this point values 1.
+#keep doing this thing until all 1 gone
+                    
+    findway()
+    for i in range(len(clist)):
+        for j in range(len(clist[i])):
+            mlist[i][j] = clist[i][j] 
+    cullist = []
+    for i in range(len(clist)):
+        for j in range(len(clist[i])):
+            if clist[i][j] == -1:
+                cullist.append((i,j))
+
+        
+                
+
+#dlist is a temp list
+#gatelist stores all the coordinates of gates, which have the value of 2 or 3 or 4
+#this part is to remove all the gate which is cul-de-scas
+
+    dlist = []
+    gatelist = []    
+    for i in range(len(a)):
+        if a[i][0] == len(blist)-1 and a[i][0] != 0:
+            a[i] = (a[i][0]-1,a[i][1])
+        if a[i][1] == len(blist[a[i][0]])-1 and a[i][1] != 0:
+            a[i] = (a[i][0],a[i][1]-1)
+    for i in a:
+        if clist[i[0]][i[1]] > 1:
+            gatelist.append(i)
+
+
+
+
+#path stores the path without the interactions of the maze
+#findpath is a recursive function we have mentioned before(all the recursive function can be found at the top)
+#this part is to find the path of the maze without any interactions
+#if the gate is a gate or a pillar, we should store it too
+            
+    path = []       
+    for _ in gatelist:
+        (i,j) = _
+        dlist = []
+        if clist[i][j] == 2:
+            findpath(i,j,dlist)
+    for i in accessible_area:
+        if i == (0,0)  and (clist[i[0]][i[1]] == 2 or clist[i[0]][i[1]] == 5):
+            path.append([i])
+        if i == (len(clist),len(clist[0])) and (clist[i[0]-1][i[1]-1] == 2 or clist[i[0]-1][i[1]-1] == 5):
+            path.append([(len(blist)-2,len(blist[0])-2)])
+        if i == (len(clist),0) and  (clist[i[0]-1][0] == 2 or clist[i[0]-1][0] == 5):
+            path.append([(len(blist)-2,0)])
+        if i == (0,len(clist[0]))  and (clist[0][i[1]-1] == 2 or clist[0][i[1]-1] == 5):
+            path.append([(0,len(blist[0])-2)])
+
+
+#findarea is a recursive function we have mentioned before(all the recursive function can be found at the top)
+#this part is to find the number of the accessible areas
+            
+    while True:
+        _ = find(-1)
+        if _ == (-1,-1):
+            break
+        findarea(_[0],_[1])
+        area_num += 1
+
+
+#findaccess is a recursive function we have mentioned before(all the recursive function can be found at the top)
+#this part is to get the number of accessible areas in the maze
+#approve stores the coordinates of gate, which shouldn't be the cul-de-sacs and only have 2 ways to go
+#innerpoint stores the inaccessible point
+#innerpointnum is the number of the inner point
+#inaccessible has a length of the number of accessible areas
+#cullist stores the coordinates of the cul-de-sacs
+#because we have remove the inner point, so the rest are all cul-de-sacs
+#this part is to get the number of cul-de-sacs and the innerpoint
+#because some inner point is like the cul-de-sacs(their value equal to -1) so we should first remove the inner point from the list
+
+    approve = []
+    inaccessible = [x for x in range(11,area_num)]
+    innerpoint = []
+    for i in range(len(clist)):
+        for j in range(len(clist[i])):
+            qlist[i][j] = clist[i][j] 
+    for i in a:
+        if clist[i[0]][i[1]] > 1000000:
+            continue
+        findaccess(i[0],i[1])
+        num_access += 1
+    countnum = []
+    innerpointnum = 0
+    for i in range(len(clist)):
+        for j in range(len(clist[0])):
+            if clist[i][j] not in countnum and clist[i][j] >= 1000000:
+                countnum.append(clist[i][j])
+            if clist[i][j] not in innerpoint and clist[i][j] < 1000000:
+                innerpoint.append((i,j))
+                innerpointnum += 1
+    cul_de_sacsnum = []
+    for i in range(len(clist)):
+        for j in range(len(clist[i])):
+            clist[i][j] = qlist[i][j]
+            if clist[i][j] != 2 and clist[i][j] != 5 and clist[i][j] != 3 and clist[i][j] != 4 \
+               and (i,j) not in innerpoint and clist[i][j] not in cul_de_sacsnum:
+                cul_de_sacsnum.append(clist[i][j])
+    cullist = [x for x in cullist if x not in innerpoint]            
+
+
+
+
+
+#num_wall is the number of the sets of the walls
+#findwall is a recursive function we have mentioned before(all the recursive function can be found at the top)
+#this part is to get the number of sets of walls in the maze
+                
+    while True:
+        _ = find2(1,2,3)
+        if _ == (-1,-1):
+            break
+        findwall(_[0],_[1])
+        num_wall += 1
+
+
+
+
+#if the input without -print then we do this part
+#this part is to print the result of the maze
+                
+    if not args.print:
+        if gate == 0:
+            print('The maze has no gate.')
+        elif gate == 1:
+            print('The maze has a unique gate.')
+        else:
+            print('The maze has {} gates.'.format(gate))
+            
+        if num_wall == 0:
+            print('The maze has no set of walls that are all connected.')
+        elif num_wall == 1:
+            print('The maze has a unique set of walls that are all connected.')
+        else:
+            print('The maze has {} sets of walls that are all connected.'.format(num_wall))
+
+        if innerpointnum == 0:
+            print('The maze has no inaccessible inner point.')
+        elif innerpointnum == 1:
+            print('The maze has a unique inaccessible inner point.')
+        else:
+            print('The maze has {} inaccessible inner points.'.format(innerpointnum))
+
+        if len(countnum) == 0:
+            print('The maze has no accessible area.')
+        elif len(countnum) == 1:
+            print('The maze has a unique accessible area.')
+        else:
+            print('The maze has {} accessible areas.'.format(len(countnum)))
+
+        if len(cul_de_sacsnum) == 0:
+            print('The maze has no set of accessible cul-de-sacs that are all connected.')
+        elif len(cul_de_sacsnum) == 1:
+            print('The maze has a unique set of accessible cul-de-sacs that are all connected.')
+        else:
+            print('The maze has {} sets of accessible cul-de-sacs that are all connected.'.format(len(cul_de_sacsnum)))
+            
+        if len(path) == 0:
+            print('The maze has no entry-exit path with no intersection not to cul-de-sacs.')
+        elif len(path) == 1:
+            print('The maze has a unique entry-exit path with no intersection not to cul-de-sacs.')
+        else:
+            print('The maze has {} entry-exit paths with no intersection not to cul-de-sacs.'.format(len(path)))
+
+
+
+
+#row stores the walls to be draw in horical line
+#column stores the walls to be draw in vertical line
+#this part is to combine all the next points together
+#for example: (2,3) and (3,4) can be combined as (2,4)
+
+    row = []
+    column = []
+    for i in range(len(blist)):
+        for j in range(len(blist[i])):
+            if blist[i][j] == 1:
+                row.append([i,j,-1])
+            if blist[i][j] == 2:
+                column.append([j,i,-1])
+            if blist[i][j] == 3:
+                row.append([i,j,-1])
+                column.append([j,i,-1])
+    
+    column = sorted(column,key=lambda x: x[0])
+    i = -1
+    while i != len(row)-2 and len(row) > 0:
+        i += 1
+        if (row[i+1][1]-1 == row[i][1] or row[i+1][1]-1 == row[i][2])and row[i+1][0] == row[i][0] :
+            row[i][2] = row[i+1][1]
+            row.remove(row[i+1])
+            i = -1
+            continue
+    i = -1
+    while i != len(column)-2 and len(row) > 0:
+        i += 1
+        if (column[i+1][1]-1 == column[i][1] or column[i+1][1]-1 == column[i][2])and column[i+1][0] == column[i][0] :
+            column[i][2] = column[i+1][1]
+            column.remove(column[i+1])
+            i = -1
+            continue  
+
+
+
+#drawrow stores the walls to be draw in horical line
+#drawcolumn stores the walls to be draw in vertical line
+#this part is to combine all the next points together
+#for example: (2,2),(2,3) and (2,3)(2,4) can be combined as (2,2),(2,4)
+#in order to draw these lines we have to store the directions of the point
+#and then we could know how to draw the lines
+#for example: we have a point (2,3), which has the way to up and right(shouldn't go to the sul-de-sacs),and if we define the left is '1' up is '2' down is '4' and right is '3'
+#then we could store the point as the format of (2,3,2,3), the last two number represents the direction and beacuse all the points only have two way to go so each one has 4 elements
+#and then we draw point by point and combine all the neghbour point together
+
+    drawrow = []
+    drawcolumn = []
+    for k in range(len(path)):
+        for m in range(len(path[k])):
+            (i,j) = path[k][m]
+            path[k][m] = [i,j]
+            if i != 0 and ((blist[i][j] != 1 and blist[i][j] != 3)) and mlist[i-1][j] != -1:
+                path[k][m].append(2)
+            if i != len(clist)-1 and ((blist[i+1][j] != 1 and blist[i+1][j] != 3)) and mlist[i+1][j] != -1:
+                path[k][m].append(4)
+            if j != 0 and ((blist[i][j] != 2 and blist[i][j] != 3))and mlist[i][j-1] != -1:
+                path[k][m].append(1)
+            if j != len(clist[i])-1 and ((blist[i][j+1] != 2 and blist[i][j+1] != 3))and mlist[i][j+1] != -1:
+                path[k][m].append(3)
+            if i == 0 and ((blist[i][j] != 1 and blist[i][j] != 3)):
+                path[k][m].append(2)
+            if i == len(clist)-1 and blist[i+1][j] != 1:
+                path[k][m].append(4)
+            if j == 0 and blist[i][j] != 2 and blist[i][j] != 3:
+                path[k][m].append(1)
+            if j == len(clist[0])-1 and (blist[i][j+1] != 2):
+                path[k][m].append(3)
+    for i in path:
+        for j in i:
+            if j[2] == 1 or j[3] == 1:
+                drawrow.append((j[1]-0.5,j[0]+0.5,j[1]+0.5,j[0]+0.5))
+            if j[2] == 3 or j[3] == 3:
+                drawrow.append((j[1]+0.5,j[0]+0.5,j[1]+1.5,j[0]+0.5))
+            if j[2] == 2 or j[3] == 2:
+                drawcolumn.append((j[1]+0.5,j[0]-0.5,j[1]+0.5,j[0]+0.5))
+            if j[2] == 4 or j[3] == 4:
+                drawcolumn.append((j[1]+0.5,j[0]+0.5,j[1]+0.5,j[0]+1.5))
+    drawcolumn = list(set(drawcolumn))       
+    drawrow = list(set(drawrow))
+    for i in range(len(drawcolumn)):
+        drawcolumn[i] = list(drawcolumn[i])
+    for i in range(len(drawrow)):
+        drawrow[i] = list(drawrow[i])
+    i = -1
+    if drawcolumn != []:
+        while i != len(drawcolumn)-2:
+            i += 1
+            for j in drawcolumn:
+                if j[0] == drawcolumn[i][0] and j[1] == drawcolumn[i][3]:
+                    drawcolumn[i][3] = j[3]
+                    drawcolumn.remove(j)
+                    i = -1
+                    continue
+    i = -1
+    if drawrow != []:
+        while i != len(drawrow)-2 :
+            i += 1
+            for j in drawrow:
+                if j[0] == drawrow[i][2] and j[1] == drawrow[i][3]:
+                    drawrow[i][2] = j[2]
+                    drawrow.remove(j)
+                    i = -1
+                    continue
+    drawcolumn = sorted(drawcolumn,key=lambda x: x[1]) 
+    drawcolumn = sorted(drawcolumn,key=lambda x: x[0])
+    drawrow = sorted(drawrow,key=lambda x: x[0])
+    drawrow = sorted(drawrow,key=lambda x: x[1])
+    accessible_area = sorted(accessible_area,key=lambda x: x[1])
+    accessible_area = sorted(accessible_area,key=lambda x: x[0])
+        
+                
+   
+    
+#if the input has the -print,we should print the pdf and the .tex file
+                    
+if args.print:
+    filename = filename.replace('.txt','.tex')
+    outputfile = filename
+    with open(outputfile,'w') as f:   
+        f.write('\documentclass[10pt]{article}\n\\usepackage{tikz}\n\\usetikzlibrary{shapes.misc}\n\\usepackage[margin=0cm]{geometry}\n\\pagestyle{empty}\n\\tikzstyle{every node}=[cross out, draw, red]\n\n\\begin{document}\n\n\\vspace*{\\fill}\n\\begin{center}\n\\begin{tikzpicture}[x=0.5cm, y=-0.5cm, ultra thick, blue]\n% Walls\n')
+        for i in row:
+            if i[2] == -1:
+                f.write('    \draw ({},{}) -- ({},{});\n'.format(i[1],i[0],i[1]+1,i[0]))
+            else:
+                f.write('    \draw ({},{}) -- ({},{});\n'.format(i[1],i[0],i[2]+1,i[0]))
+        for i in column:
+            if i[2] == -1:
+                f.write('    \draw ({},{}) -- ({},{});\n'.format(i[0],i[1],i[0],i[1]+1))
+            else:
+                f.write('    \draw ({},{}) -- ({},{});\n'.format(i[0],i[1],i[0],i[2]+1))
+        f.write('% Pillars\n')
+        for i in accessible_area:
+            f.write('    \\fill[green] ({},{}) circle(0.2);\n'.format(i[1],i[0]))
+        f.write('% Inner points in accessible cul-de-sacs\n')
+        for i in cullist:
+            f.write('    \\node at ({},{}) {};\n'.format(i[1]+0.5,i[0]+0.5,'{}'))
+        f.write('% Entry-exit paths without intersections\n')
+        for i in drawrow:
+            f.write('    \draw[dashed, yellow] ({},{}) -- ({},{});\n'.format(i[0],i[1],i[2],i[3]))
+        for i in drawcolumn:
+            f.write('    \draw[dashed, yellow] ({},{}) -- ({},{});\n'.format(i[0],i[1],i[2],i[3]))
+        f.write('\end{tikzpicture}\n\\end{center}\n\\vspace*{\\fill}\n\n\\end{document}')   
+        f.close()
+    #os.system("pdflatex {}".format(filename))
+
