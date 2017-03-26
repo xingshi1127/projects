@@ -1,0 +1,70 @@
+from random import seed, randrange
+import sys
+
+
+dim = 10
+alist= []
+
+def display_grid():
+    for i in range(dim):
+        print('    ', end = '')
+        for j in range(dim):
+            print(' 1', end = '') if grid[i][j] else print(' 0', end = '')
+        print()
+    print()
+
+
+def size_of_largest_construction():
+    for i in range(9,-1,-1):
+        for j in range(10):
+            if grid[i][j] != 0:
+                grid2[i][j] = construction_size(i,j)
+             
+    for i in range(9,-1,-1):
+        a = 0
+        for j in range(10):
+            if grid2[i][j] != 0:
+                a += grid2[i][j]
+            else:
+                alist.append(a)
+                a = 0
+        alist.append(a)
+    return sorted(alist).pop()
+                
+                
+            
+
+
+# If j1 <= j2 and the grid has a 1 at the intersection of row i and column j
+# for all j in {j1, ..., j2}, then returns the number of blocks in the construction
+# built over this line of blocks.
+def construction_size(i, j):
+    if i == 0:
+        return 1
+    else :
+        count = 1
+        num = 1
+        while(grid[i-count][j] != 0 and i-count > -1):
+            num += 1
+            count += 1
+        return num
+        
+
+            
+try:
+    for_seed, n = [int(i) for i in
+                           input('Enter two integers, the second one being strictly positive: ').split()]
+    if n <= 0:
+        raise ValueError
+except ValueError:
+    print('Incorrect input, giving up.')
+    sys.exit()
+
+seed(for_seed)
+grid = [[randrange(n) for _ in range(dim)] for _ in range(dim)]
+grid2 = grid.copy()
+print('Here is the grid that has been generated:')
+display_grid()
+print('The largest block construction has {} blocks.'.format(size_of_largest_construction()))  
+
+
