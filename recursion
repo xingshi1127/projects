@@ -1,0 +1,130 @@
+# Randomly fills an array of size 10x10 with 0s and 1s, and
+# outputs the number chess knights needed to jump from 1s to 1s
+# and visit all 1s (they can jump back to locations previously visited).
+#
+
+
+from random import seed, randrange
+import sys
+
+
+dim = 10
+max_num = [0]
+alist = []
+
+def display_grid():
+    for i in range(dim):
+        print('    ', end = '')
+        for j in range(dim):
+            print(' 1', end = '') if grid[i][j] else print(' 0', end = '')
+        print()
+    print()
+
+def find_true():
+    mark = 0
+    for i in range(len(grid)):
+        for j in range(len(grid)):
+            if grid[i][j] == True and (i,j) not in already:
+                mark = 1
+                return (i,j)
+    if mark == 0:
+
+        return (-1,-1)
+
+def find(i,j):
+
+        if grid2[i+2+2][j+1+2] and (i+2,j+1) not in already:
+            max_num[0] -= 1
+            already.append((i+2,j+1))
+            find(i+2,j+1)
+        if grid2[i+2+2][j-1+2] and (i+2,j-1) not in already:
+            max_num[0] -= 1
+            already.append((i+2,j-1))
+            find(i+2,j-1)
+        if grid2[i-2+2][j+1+2] and (i-2,j+1) not in already :
+            max_num[0] -= 1
+            already.append((i-2,j+1))
+            find(i-2,j+1)
+        if grid2[i-2+2][j-1+2] and (i-2,j-1) not in already:
+            max_num[0] -= 1
+            already.append((i-2,j-1))
+            find(i-2,j-1)
+        if grid2[i+1+2][j+2+2] and (i+1,j+2) not in already:
+            max_num[0] -= 1
+            already.append((i+1,j+2))
+            find(i+1,j+2)
+        if grid2[i+1+2][j-2+2] and (i+1,j-2) not in already:
+            max_num[0] -= 1
+            already.append((i+1,j-2))
+            find(i+1,j-2)
+        if grid2[i-1+2][j+2+2] and (i-1,j+2) not in already:
+            max_num[0] -= 1
+            already.append((i-1,j+2))
+            find(i-1,j+2)
+        if grid2[i-1+2][j-2+2] and (i-1,j-2) not in already:
+            max_num[0] -= 1
+            already.append((i-1,j-2))
+            find(i-1,j-2)
+
+            
+    
+already = []
+
+def explore_board():
+    for i in range(len(grid)):
+        for j in range(len(grid)):
+            if grid[i][j] == True:
+                max_num[0] += 1
+
+    while True:
+        (i,j) = find_true();
+        if i == -1 and j == -1:
+            break
+        already.append((i,j))
+        find(i,j)
+        
+
+    return max_num[0]
+    
+            
+    # Replace pass above with your code 
+
+
+
+# Possibly insert extra code here
+
+
+try:
+    for_seed, n = [int(i) for i in
+                           input('Enter two integers: ').split()]
+    if not n:
+        raise ValueError
+except ValueError:
+    print('Incorrect input, giving up.')
+    sys.exit()
+
+seed(for_seed)
+grid = [[None] * dim for _ in range(dim)]
+if n > 0:
+    for i in range(dim):
+        for j in range(dim):
+            grid[i][j] = randrange(n) > 0
+else:
+    for i in range(dim):
+        for j in range(dim):
+            grid[i][j] = randrange(-n) == 0
+print('Here is the grid that has been generated:')
+display_grid()
+grid2 = [[0]*14 for i in range(14)]
+for i in range(2,12):
+    for j in range(2,12):
+        grid2[i][j] = grid[i-2][j-2]
+
+nb_of_knights = explore_board()
+if not nb_of_knights:
+    print('No chess knight has explored this board.')
+else:
+    print('At least {} chess'.format(nb_of_knights), end = ' ')
+    print('knight has', end = ' ') if nb_of_knights == 1 else print('knights have', end = ' ')
+    print('explored this board.')
+
