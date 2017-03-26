@@ -1,0 +1,445 @@
+from collections import defaultdict
+import sys
+
+
+## this is to find the index of the double quations in the sentence
+
+def finddoublequotes(sentence):
+    index = []
+    sentence = sentence.split(' ')
+    sentence = [x for x in sentence if x != '']
+    for i in range(len(sentence)):
+        if sentence[i].startswith('"') or sentence[i].endswith('"'):
+            index.append(i)          
+    return index
+
+
+with open('test1.txt') as filename:
+    string = ''
+    for i in filename:
+        string = string + i.strip()+' '
+
+
+##sentence is used to store the sentence divided by full stop
+
+sentence = []
+string = string.replace('."','"#').replace(',"','"').replace('!"','"#').replace('.','#').replace('!','#')
+sentence = string.split('#')
+print(sentence)
+
+
+##namelist is used to store all the names of Sirs
+##whathesays is a dictionary used to store the words said by Sirs
+##word is the words in the sentence
+
+namelist = {}
+whathesays = defaultdict(list)
+for i in sentence:
+    word = []
+    indexofdoublequotes = []
+    word = i.split(' ')
+    word = [x for x in word if x != '']
+    indexofdoublequotes = finddoublequotes(i)
+    for _ in range(len(word)):
+        if word[_] == 'Sir':
+            if indexofdoublequotes != []:
+                if _+1 < indexofdoublequotes[0] or _+1 > indexofdoublequotes[1]:
+                    word[indexofdoublequotes[0]] = word[indexofdoublequotes[0]].replace('"','')
+                    word[indexofdoublequotes[1]] = word[indexofdoublequotes[1]].replace('"','')
+                    whathesays[word[_+1]].append(word[indexofdoublequotes[0]:indexofdoublequotes[1]+1])
+            if word[_+1] not in namelist:
+                namelist[word[_+1].replace(',','')] = 1
+        if word[_] == 'Sirs':
+            for m in range(_+1,len(word)):
+                if word[m] == 'and':
+                    if word[m+1].replace(',','') not in namelist:
+                        namelist[word[m+1].replace(',','')] = 1
+                    break
+                if word[m].replace(',','') not in namelist:
+                    namelist[word[m].replace(',','')] = 1
+if '' in namelist:
+    namelist.pop('')
+##print(whathesays)
+##print(namelist)
+
+
+##use dictionary to store the structure.
+    
+atleastT = defaultdict(list)
+atleastF = defaultdict(list)
+atmostT = defaultdict(list)
+atmostF = defaultdict(list)
+exactlyT = defaultdict(list)
+exactlyF = defaultdict(list)
+allT = defaultdict(list)
+allF = defaultdict(list)
+isT = defaultdict(list)
+isF = defaultdict(list)
+orsirT = defaultdict(list)
+orsirF = defaultdict(list)
+andsirT = defaultdict(list)
+andsirF = defaultdict(list)
+
+
+##parse whathesays
+
+for i in whathesays:
+    for _ in whathesays[i]:
+        if all(x in _ for x in ['least','one','of','is','a','Knave']):
+            for j in namelist:
+                if 'us' in _:
+                    atleastF[i].append(j)
+                    continue
+                if j in _ and j is not i:
+                    if 'I' in _:
+                        atleastF[i].append(i)
+                    atleastF[i].append(j)
+            continue
+        if all(x in _ for x in ['least','one','of','is','a','Knight']):
+            for j in namelist:
+                if 'us' in _:
+                    atleastT[i].append(j)
+                    continue
+                if j in _ and j is not i:
+                    if 'I' in _:
+                        atleastT[i].append(i)
+                    atleastT[i].append(j)
+            continue
+        if all(x in _ for x in ['most','one','of','is','a','Knight']):
+            for j in namelist:
+                if 'us' in _:
+                    atmostT[i].append(j)
+                    continue
+                if j in _ and j is not i:
+                    if 'I' in _:
+                        atmostT[i].append(i)
+                    atmostT[i].append(j)
+            continue
+        if all(x in _ for x in ['most','one','of','is','a','Knave']):
+            for j in namelist:
+                if 'us' in _:
+                    atmostF[i].append(j)
+                    continue
+                if j in _ and j is not i:
+                    if 'I' in _:
+                        atmostF[i].append(i)
+                    atmostF[i].append(j)
+            continue
+        if all(x in _ for x in ['one','of','is','a','Knave']):            
+            if 'exactly' in _ or 'Exactly' in _:
+                for j in namelist:
+                    if 'us' in _:
+                        exactlyF[i].append(j)
+                        continue
+                    if j in _ and j is not i:
+                        if 'I' in _:
+                            exactlyF[i].append(i)
+                        exactlyF[i].append(j)
+                continue
+        if all(x in _ for x in ['one','of','is','a','Knight']):
+            if 'exactly' in _ or 'Exactly' in _:
+                for j in namelist:
+                    if 'us' in _:
+                        exactlyT[i].append(j)
+                        continue
+                    if j in _ and j is not i:
+                        exactlyT[i].append(j)
+                if 'I' in _:
+                        exactlyT[i].append(i)
+                continue
+        if all(x in _ for x in ['of','us','are','Knaves']):            
+            if 'All' in _ or 'all' in _:
+                for j in namelist:
+                    allF[i].append(j)
+                continue
+        if all(x in _ for x in ['of','us','are','Knights']):
+            if 'All' in _ or 'all' in _:
+                for j in namelist:
+                    allT[i].append(j)
+                continue
+        elif all(x in _ for x in ['or','is','Knave']):
+            for j in namelist:
+                if j in _ and j is not i:
+                    orsirF[i].append(j)
+            if 'I' in _:
+                    orsirF[i].append(i)
+        elif all(x in _ for x in ['or','is','Knight']):
+            for j in namelist:
+                if j in _ and j is not i:
+                    orsirT[i].append(j)
+            if 'I' in _:
+                    orsirT[i].append(i)
+            continue
+        elif all(x in _ for x in ['and','are','Knaves']):
+            for j in namelist:
+                if j in _ and j is not i:
+                    andsirF[i].append(j)
+            if 'I' in _:
+                    andsirF[i].append(i)
+            continue
+        elif all(x in _ for x in ['and','are','Knights']):
+            for j in namelist:
+                if j in _ and j is not i:
+                    andsirT[i].append(j)
+            if 'I' in _:
+                    andsirT[i].append(i)
+            continue
+        elif all(x in _ for x in ['a','Knight']):
+            if 'am' in _:
+                isT[i].append(i)
+            else:
+                for j in namelist:
+                    if j in _ and j is not i:
+                        isT[i].append(j)
+        elif all(x in _ for x in ['a','Knave']):
+            if 'am' in _:
+                isF[i].append(i)
+            else:
+                for j in namelist:
+                    if j in _ and j is not i:
+                        isF[i].append(j)
+            
+##print('atleastT',atleastT)
+##print('atleastF',atleastF)
+##print('atmostT',atmostT)
+##print('atmostF',atmostF)
+##print('exactlyT',exactlyT)
+##print('exactlyF',exactlyF)
+##print('allT',allT)
+##print('allF',allF)
+##print('isT',isT)
+##print('isF',isF)
+##print('orsirT',orsirT)
+##print('orsirF',orsirF)
+##print('andsirT',andsirT)
+##print('andsirF',andsirF)
+
+
+##create the binary table
+                        
+table = ['{0:0>{1}s}'.format(bin(x)[2:],len(namelist)) for x in range(0,2**len(namelist))]
+if table == ['0']:
+    sys.exit()
+nameindex = {}
+index = 0
+for i in namelist:
+    nameindex[index] = i
+    index += 1
+
+##answer is used to store the answer of the question, and if some condition are not satisfied, remove from it
+    
+answer = []
+for i in table:
+    for j in range(len(i)):
+        namelist[nameindex[j]] = int(i[j])
+    answer.append(i)
+    
+    count = 0
+    if atleastT != {} and answer != []:
+        for _ in atleastT:
+            for  k in atleastT[_]:
+                if namelist[k] == 1:
+                    count += 1
+            if (count != 0) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count == 0) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+        
+
+    count = 0
+    if atleastF != {} and answer != []:
+        for _ in atleastF:
+            for  k in atleastF[_]:
+                if namelist[k] == 0:
+                    count += 1
+            if (count != 0) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count == 0) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+
+    count = 0
+    if atmostT != {} and answer != []:
+        for _ in atmostT:
+            for  k in atmostT[_]:
+                if namelist[k] == 1:
+                    count += 1
+            if (count == 0 or count == 1) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 0 and count != 1) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+
+    count = 0
+    if atmostF != {} and answer != []:
+        for _ in atmostF:
+            for  k in atmostF[_]:
+                if namelist[k] == 0:
+                    count += 1
+            if (count == 0 or count == 1) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 0 and count != 1) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+
+    count = 0
+    if exactlyT != {} and answer != []:
+        for _ in exactlyT:
+            for  k in exactlyT[_]:
+                if namelist[k] == 1:
+                    count += 1
+            if (count == 1) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 1) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+
+    count = 0
+    if exactlyF != {} and answer != []:
+        for _ in exactlyF:
+            for  k in exactlyF[_]:
+                if namelist[k] == 0:
+                    count += 1
+            if (count == 1) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 1) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+
+    count = 0
+    if allT != {} and answer != []:
+        for _ in allT:
+            for  k in allT[_]:
+                if namelist[k] == 0:
+                    count += 1
+            if (count == 0) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 0) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+
+    count = 0
+    if allF != {} and answer != []:
+        for _ in allF:
+            for  k in allF[_]:
+                if namelist[k] == 1:
+                    count += 1
+            if (count == 0) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 0) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)          
+
+
+    if isT != {} and answer != []:
+        for _ in isT:
+             for  k in isT[_]:
+                if namelist[k] == 1 and namelist[_] == 0:
+                    if i in answer:
+                        answer.remove(i)
+                if namelist[k] == 0 and namelist[_] == 1:
+                    if i in answer:
+                        answer.remove(i)
+
+    if isF != {} and answer != []:
+        for _ in isF:
+            for  k in isF[_]:
+                if namelist[k] == 0 and namelist[_] == 0:
+                    if i in answer:
+                        answer.remove(i)
+                if namelist[k] == 1 and namelist[_] == 1:
+                    if i in answer:
+                        answer.remove(i)
+
+    count = 0
+    if orsirT != {} and answer != []:
+        for _ in orsirT:
+            for  k in orsirT[_]:
+                if namelist[k] == 1:
+                    count += 1
+            if (count == 1) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 1) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+
+    count = 0
+    if orsirF != {} and answer != []:
+        for _ in orsirF:
+            for  k in orsirF[_]:
+                if namelist[k] == 0:
+                    count += 1
+            if (count == 1) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 1) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+                    
+    count = 0
+    if andsirT != {} and answer != []:
+        for _ in andsirT:
+            for  k in andsirT[_]:
+                if namelist[k] == 0:
+                    count += 1
+            if (count == 0) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 0) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)
+
+    count = 0
+    if andsirF != {} and answer != []:
+        for _ in andsirF:
+            for  k in andsirF[_]:
+                if namelist[k] == 1:
+                    count += 1
+            if (count == 0) and namelist[_] == 0:
+                if i in answer:
+                    answer.remove(i)
+            if (count != 0) and namelist[_] == 1:
+                if i in answer:
+                    answer.remove(i)   
+##    print('    ',namelist)
+##
+##print('\nanswer         \n\n',answer)
+
+
+##used for output
+                    
+knight = ''
+for i in sorted(namelist):
+    knight += ' ' + i
+print('The Sirs are: {}'.format(knight))
+if  answer == []:
+    print('There is no solution.')
+elif len(answer) > 1:
+    print('There are {} solutions.'.format(len(answer)))
+elif len(answer) == 1:
+    answerlist = []
+    print('There is a unique solution:')
+    for i in range(len(answer[0])):
+        if answer[0][i] == '0':
+            answerlist.append('Sir {} is a Knave.'.format(nameindex[i]))
+        else:
+            answerlist.append('Sir {} is a Knight.'.format(nameindex[i]))
+    answerlist = sorted(answerlist)
+    for i in answerlist:
+        print(i)
+            
+    
+                         
+                         
+        
+        
