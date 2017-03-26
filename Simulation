@@ -1,0 +1,313 @@
+import random
+class Node(object):
+    def __init__ (self, d, a, b,n = None):
+        self.data = d
+        self.next_node = n
+        self.arrival = a
+        self.service = b
+
+    def get_next (self):
+        return self.next_node
+
+    def set_next (self, n):
+        self.next_node = n
+
+    def get_data (self):
+        return self.data
+
+    def set_data (self, d):
+        self.data = d
+
+    def get_arrival (self):
+        return self.arrival
+
+    def set_arrival (self, a):
+        self.arrival = a
+
+    def get_service (self):
+        return self.service
+
+    def set_service (self, b):
+        self.service = b
+
+
+class LinkedList (object):
+
+    def __init__(self, r = None):
+        self.root = r
+        self.size = 0
+
+    def get_size (self):
+        return self.size
+
+    def add_dataBase(self,d,a,b):
+        self.add_down(d,a,b)
+
+    def add_down(self,d,a,b):
+        temp = Node(d,a,b)
+        if self.size == 0:
+            self.root = temp
+            self.size += 1
+        else:
+            node = self.root
+            while node.get_next():
+                node = node.get_next()
+            node.set_next(temp)
+            self.size += 1
+        
+    def add (self, d ,a, b):
+        new_node = Node (d,0,0,self.root)
+
+        self.root = new_node
+        self.size += 1
+
+    def add_index(self,index,value, a, b):
+        node = self.root
+        temp = Node(value,a,b)
+        if index == 0:
+            self.add(value,a,b)
+        else:
+            if index + 1 > self.size:
+                self.add_down(value,a,b)
+                return
+            i = 0
+            while index - 1 > i :
+                node = node.get_next()
+                i +=  1
+            if node.get_next():
+                temp.set_next(node.get_next())
+            self.size += 1
+            node.set_next(temp)
+    
+    def delete (self, d):
+        this_node = self.root
+        prev_node = None
+        while this_node:
+            if this_node.get_data() == d:
+                if prev_node:
+                    prev_node.set_next(this_node.get_next())
+                    self.size -= 1
+                    return "Next is " , prev_node.get_next().get_data()
+                else:
+                    if self.size > 1:
+                        self.root = this_node.get_next()
+                        self.size -= 1
+                        return  self.root.data  #  data removed
+                    elif self.size == 1:
+                        self.root = None
+                        self.size -= 1
+                        return "LinkedList is Empty Now"
+
+            else:
+                prev_node = this_node
+                this_node = this_node.get_next()
+        return "Cannot be found"  # data not found
+
+    def find (self, d):
+        this_node = self.root
+        while this_node:
+            if this_node.get_data() == d:
+                return d
+            else:
+                this_node = this_node.get_next()
+        return None
+
+    def print_Database(self):
+        node = self.root
+        while node:
+            if node.arrival != 0:
+                print("[" , node.data , "] : pkt, arrives at" , node.arrival, ".")
+            else:
+                print("[" , node.data , "] : pkt, leaves at " , node.service , ".")
+            node = node.get_next()
+
+    def delete_dataBase(self,d):
+        self.delete(d)
+        self.delete(d)
+
+
+
+sqenNo_and_ArrivalTime_and_ServiceTime = []
+
+
+
+#要不注释这里
+# Speed = input("Please input a value for Lambda: ")
+# NPKTS = float(input("Please input a value for NPKTS: "))
+# Arrival = []
+# TimeSlot = []
+# linkList = LinkedList()
+# dataBase = LinkedList()
+# queuing = False #等待序列的状态
+# EventState = {}#事件的状态，以序列号作为key，标记这个事件等待状态和当前时刻作为value
+# timeToGo = 0
+# time = 1/1000
+# count = 0
+# AverageNo = []
+# AverageTime = []
+# while(time):
+#     time += 1 / 1000
+#     while len(sqenNo_and_ArrivalTime_and_ServiceTime) < 3 and count < NPKTS:
+#         TimeSlot.append(random.expovariate(1/float(Speed)))
+#         if count == 0:
+#             Arrival.append(TimeSlot[0])
+#             sqenNo_and_ArrivalTime_and_ServiceTime.append([count, float(Arrival[-1]), (random.expovariate(1/10000)/10000)])
+#             count += 1
+#             continue
+#         Arrival.append(float(Arrival[-1]) + float(TimeSlot[-1]))
+#         sqenNo_and_ArrivalTime_and_ServiceTime.append([count, float(Arrival[-1]), (random.expovariate(1/10000)/10000)])
+#         count += 1
+#     """
+#   #     如果列表（sqenNo_and_Arriaval_and_Service）不为空，而且0号时间的到达时间小于目前时间
+#   #     """
+#     if len(sqenNo_and_ArrivalTime_and_ServiceTime) > 0 and sqenNo_and_ArrivalTime_and_ServiceTime[0][1] <= time:
+#         if linkList.size >= 1:
+#             queuing = True                                                          #如果等待队列的长度大于等于1，我们把队列状态设置为需要等待
+#         EventState[sqenNo_and_ArrivalTime_and_ServiceTime[0][0]] = (queuing,time) #将这个事件是否需要等待记录下来
+#        # print(EventState[sqenNo_and_ArrivalTime_and_ServiceTime[0][0]])
+#         linkList.add_down(sqenNo_and_ArrivalTime_and_ServiceTime[0][0],sqenNo_and_ArrivalTime_and_ServiceTime[0][1],sqenNo_and_ArrivalTime_and_ServiceTime[0][2])#接下来将这个帧添加到等待队列（linked list）
+#         AverageNo.append(linkList.size)
+#         print("[","{:.2f}".format(sqenNo_and_ArrivalTime_and_ServiceTime[0][1]) , "]: pkt ",sqenNo_and_ArrivalTime_and_ServiceTime[0][0] , " arrives and finds ", linkList.size - 1," packets in the queue")
+#         dataBase.add_dataBase(sqenNo_and_ArrivalTime_and_ServiceTime[0][0], "{:.2f}".format(sqenNo_and_ArrivalTime_and_ServiceTime[0][1]), 0)
+#         sqenNo_and_ArrivalTime_and_ServiceTime.pop(0)#将已经插入到等待队列的帧从列表删除
+#         TimeSlot.pop(0)
+#         Arrival.pop(0)
+#     """如果等待队列不为空，而且等待队列的开头帧处于服务时间
+#     将队列状态设置为需要等待"""
+#     if  linkList.size > 0 and linkList.root.arrival > time and (linkList.root.arrival + linkList.root.service) < time:
+#         queuing = True
+#     """如果等待队列不为空，事件处于需要等待状态，则需要判断到达时间加上服务时间加上等待时间是否已经小于当前时间"""
+#     if linkList.size > 0 and (EventState[linkList.root.data][0]) and (linkList.root.arrival + linkList.root.service + (timeToGo - EventState[linkList.root.data][1])) <= time:
+#         #print("-----")
+#         queuing = False#进入此条件代表开头事件可以被推出等待序列，将等待状态（queueing）设置为不需等待
+#         timeToGo = time#设置下一事件的开始服务时间
+#         AverageTime.append(linkList.root.service + (timeToGo - EventState[linkList.root.data][1]))
+#         dataBase.add_dataBase(linkList.root.data,0, "{:.2f}".format(time))
+#         print("[","{:.2f}".format(time) ,"]: pkt ",linkList.root.data," departs having spent ", "{:.2f}".format(linkList.root.service + (timeToGo - EventState[linkList.root.data][1]))," us in the queue")
+#         linkList.delete(linkList.root.data)#推出事件
+#         if linkList.size > 0:
+#             print("[","{:.2f}".format(time)  , "]: pkt ", linkList.root.data, " in service ", linkList.size," packets in the queue")
+#         #print("以上是删除2-----")
+#     """如果等待队列不为空，事件处于不需要等待状态，则需要判断到达时间加上服务时间是否已经小于当前时间"""
+#     if  linkList.size > 0 and (not EventState[linkList.root.data][0]) and (linkList.root.arrival + linkList.root.service ) <= time:
+#         #print("--------")
+#         queuing = False#进入此条件代表开头事件可以被推出等待序列，将等待状态（queueing）设置为不需等待
+#         timeToGo = time#设置下一事件的开始服务时间
+#         AverageTime.append(linkList.root.service)
+#         dataBase.add_dataBase(linkList.root.data,0, "{:.2f}".format(time))
+#         print("[","{:.2f}".format(time) ,"]: pkt ",linkList.root.data," departs having spent ","{:.2f}".format(linkList.root.service)  ," us in the queue")
+#         #linkList.print()
+#         linkList.delete(linkList.root.data)#推出事件
+#         if linkList.size > 0:
+#             print("[","{:.2f}".format(time) , "]: pkt ", linkList.root.data, " in service ", linkList.size," packets in the queue")
+#     if len(sqenNo_and_ArrivalTime_and_ServiceTime) == 0 and linkList.size == 0:
+#         break
+#
+# averageNO = sum(AverageNo) / count
+# averageTime = sum(AverageTime) / count
+# print(averageNO, averageTime)
+#
+# findPackets = {}
+# for i in AverageNo:
+#     if i in findPackets:
+#         findPackets[i] += 1
+#     else:
+#         findPackets[i] = 1
+# print(findPackets)
+# from matplotlib import pyplot
+# x = []
+# y = []
+# for i in sorted(findPackets):
+#     if i <= 10:
+#         print(i,findPackets[i]/count)
+#         x.append(i)
+#         y.append(findPackets[i]/count)
+# pyplot.plot(x,y)
+# pyplot.show()
+# dataBase.add_down("50","20","300")
+# dataBase.delete_dataBase(30)
+# dataBase.print_Database()
+
+
+
+#要不注释这里
+TimeSlot = []
+Arrival = []
+PacketSize = []
+# Speed = int(input("Please input a value for speed: "))
+Speed = 4000
+linkList = LinkedList()
+file = open("D:\\trace.txt")
+file = iter(file)
+time = 1/10
+count = 0
+queuing = False #等待序列的状态
+EventState = {}#事件的状态，以序列号作为key，标记这个事件等待状态和当前时刻作为value
+timeToGo = 0
+AverageNo = []
+AverageTime = []
+while(time):
+    time += 1/10
+    while len(sqenNo_and_ArrivalTime_and_ServiceTime) < 3:
+        text = []
+        try:
+            line = next(file)
+        except:
+            break
+        text = (line.split("	"))
+        TimeSlot.append(text[0])
+        PacketSize.append(text[1])
+        if count == 0:
+            Arrival.append(TimeSlot[0])
+            sqenNo_and_ArrivalTime_and_ServiceTime.append([count, float(Arrival[-1]), (float(PacketSize[-1]) / Speed)])
+            count += 1
+            continue
+        Arrival.append(float(Arrival[-1]) + float(TimeSlot[-1]))
+        sqenNo_and_ArrivalTime_and_ServiceTime.append([count, float(Arrival[-1]), (float(PacketSize[-1]) / Speed)])
+        count += 1
+    """
+    如果列表（sqenNo_and_Arriaval_and_Service）不为空，而且0号时间的到达时间小于目前时间
+    """
+    if len(sqenNo_and_ArrivalTime_and_ServiceTime) > 0 and sqenNo_and_ArrivalTime_and_ServiceTime[0][1] <= time:
+        if linkList.size >= 1:
+            queuing = True                                                          #如果等待队列的长度大于等于1，我们把队列状态设置为需要等待
+        EventState[sqenNo_and_ArrivalTime_and_ServiceTime[0][0]] = (queuing,time) #将这个事件是否需要等待记录下来
+        AverageNo.append(linkList.size + 1)
+        linkList.add_down(sqenNo_and_ArrivalTime_and_ServiceTime[0][0],sqenNo_and_ArrivalTime_and_ServiceTime[0][1],sqenNo_and_ArrivalTime_and_ServiceTime[0][2])#接下来将这个帧添加到等待队列（linked list）
+#        print("[","{:.2f}".format(sqenNo_and_ArrivalTime_and_ServiceTime[0][1]) , "]: pkt ",sqenNo_and_ArrivalTime_and_ServiceTime[0][0] , " arrives and finds ", linkList.size - 1," packets in the queue")
+        sqenNo_and_ArrivalTime_and_ServiceTime.pop(0)#将已经插入到等待队列的帧从列表删除
+        TimeSlot.pop(0)
+        PacketSize.pop(0)
+        Arrival.pop(0)
+    """如果等待队列不为空，而且等待队列的开头帧处于服务时间
+    将队列状态设置为需要等待"""
+    if  linkList.size > 0 and linkList.root.arrival > time and (linkList.root.arrival + linkList.root.service) < time:
+        queuing = True
+    """如果等待队列不为空，事件处于需要等待状态，则需要判断到达时间加上服务时间加上等待时间是否已经小于当前时间"""
+    if linkList.size > 0 and (EventState[linkList.root.data][0]) and (linkList.root.arrival + linkList.root.service + (timeToGo - EventState[linkList.root.data][1])) <= time:
+        #print("-----")
+        queuing = False#进入此条件代表开头事件可以被推出等待序列，将等待状态（queueing）设置为不需等待
+        timeToGo = time#设置下一事件的开始服务时间
+        AverageTime.append(linkList.root.service + (timeToGo - EventState[linkList.root.data][1]))
+      #  print("[","{:.2f}".format(time) ,"]: pkt ",linkList.root.data," departs having spent ", "{:.2f}".format(linkList.root.service + (timeToGo - EventState[linkList.root.data][1]))," us in the queue")
+        linkList.delete(linkList.root.data)#推出事件
+       # if linkList.size > 0:
+       #     print("[","{:.2f}".format(time)  , "]: pkt ", linkList.root.data, " in serive ", linkList.size," packets in the queue")
+        #print("以上是删除2-----")
+    """如果等待队列不为空，事件处于不需要等待状态，则需要判断到达时间加上服务时间是否已经小于当前时间"""
+    if  linkList.size > 0 and (not EventState[linkList.root.data][0]) and (linkList.root.arrival + linkList.root.service ) <= time:
+        #print("--------")
+        queuing = False#进入此条件代表开头事件可以被推出等待序列，将等待状态（queueing）设置为不需等待
+        timeToGo = time#设置下一事件的开始服务时间
+        AverageTime.append(linkList.root.service)
+        #print("[","{:.2f}".format(time) ,"]: pkt ",linkList.root.data," departs having spent ","{:.2f}".format(linkList.root.service)  ," us in the queue")
+        linkList.delete(linkList.root.data)#推出事件
+       # if linkList.size > 0:
+         #   print("[","{:.2f}".format(time) , "]: pkt ", linkList.root.data, " in service ", linkList.size," packets in the queue")
+        #print("以上是删除1-----")
+    if len(sqenNo_and_ArrivalTime_and_ServiceTime) == 0 and linkList.size == 0:
+        break
+# print(AverageNo)
+# print(AverageTime)
+print(sum(AverageNo)/time, sum(AverageTime)/count)
+
