@@ -1,0 +1,45 @@
+# Written by *** for COMP9021
+
+from linked_list import *
+
+class ExtendedLinkedList(LinkedList):
+    def __init__(self, L = None):
+        super().__init__(L)
+
+    def rearrange(self):
+        a = len(self)//2
+        b = 0
+        temp = 0
+        temp1 = 0
+        if len(self)%2 != 0:
+            c = len(self) - 2
+        else:
+            c = len(self) - 1
+        for i in range(c) :
+            node = self.head
+            node1 = self.head
+            temp2 = self.head
+            for j in range(a+b//2-1):
+                node = node.next_node
+             #   print('first',node.value)
+            for k in range(b):
+                if b != 0:
+                    temp2 = node1
+                    node1 = node1.next_node
+              #  print('second',node1.value)
+            temp = node.next_node
+            node.next_node = temp.next_node
+            temp.next_node = node1
+            if b == 0:
+                self.head = temp
+            else:
+                temp2.next_node = temp
+            #self.print()
+            b += 1
+            
+        
+        
+        
+        
+    
+    
