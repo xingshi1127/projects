@@ -1,0 +1,128 @@
+# Randomly fills a grid of size 10 x 10 with 0s and 1s,
+# in an estimated proportion of 1/2 for each,
+# and computes the longest leftmost path that starts
+# from the top left corner -- a path consisting of
+# horizontally or vertically adjacent 1s --,
+# visiting every point on the path once only.
+
+
+
+import sys
+from random import seed, randint
+
+from array_queue import *
+
+
+dim = 10
+grid = [[0] * dim for i in range(dim)]
+
+def display_grid():
+    for i in range(dim):
+        print('    ', end = '')
+        for j in range(dim):
+            print(' ', grid[i][j], end = '')
+        print()
+    print()
+
+def leftmost_longest_path_from_top_left_corner():
+    final = {}       
+    from collections import deque
+    pipe = deque()
+    root = (0,0)
+    graph = final
+    pipe.appendleft([root])
+    neighbour = []
+    while len(pipe):
+        v = pipe.pop()
+        final[v[-1]] = []
+        neighbour.append(v)
+        if v[-1][0] != 9 and grid[v[-1][0]+1][v[-1][1]] == 1 and (v[-1][0]+1,v[-1][1]) not in v:
+            #neighbour.append((v[-1][0]+1,v[-1][1]))
+            final[v[-1]].append((v[-1][0]+1,v[-1][1]))
+        if v[-1][1] != 0 and grid[v[-1][0]][v[-1][1]-1] == 1 and (v[-1][0],v[-1][1]-1) not in v:
+            #neighbour.append((v[-1][0],v[-1][1]-1))
+            final[v[-1]].append((v[-1][0],v[-1][1]-1))
+        if v[-1][1] != 9 and grid[v[-1][0]][v[-1][1]+1] == 1 and (v[-1][0],v[-1][1]+1) not in v:
+            #neighbour.append((v[-1][0],v[-1][1]+1))
+            final[v[-1]].append((v[-1][0],v[-1][1]+1))
+        if v[-1][0] != 0 and grid[v[-1][0]-1][v[-1][1]] == 1 and (v[-1][0]-1,v[-1][1]) not in v:
+            #neighbour.append((v[-1][0]-1,v[-1][1]))
+            final[v[-1]].append((v[-1][0]-1,v[-1][1]))
+        if v[-1] in graph:
+            for child in reversed(graph[v[-1]]):
+                pipe.appendleft(list(v)+[child])
+    if grid[0][0] == 0:
+        return 
+    length = len(neighbour[-1])
+    checklist = []
+    for i in neighbour:        
+        if len(i) == length:
+            i.insert(0,(-1,0))
+            checklist.append(i)
+    alist = [[0]*(length+1) for x in range(len(checklist))]
+    for i in range(len(checklist)):
+        for j in range(1,len(checklist[i])-1):
+            if (checklist[i][j-1][1] == checklist[i][j][1]-1 and checklist[i][j+1][1]-1 == checklist[i][j][1])\
+               or (checklist[i][j-1][0] == checklist[i][j][0]+1 and checklist[i][j+1][0]+1 == checklist[i][j][0])\
+               or (checklist[i][j-1][1] == checklist[i][j][1]+1 and checklist[i][j+1][1]+1 == checklist[i][j][1])\
+               or (checklist[i][j-1][0] == checklist[i][j][0]-1 and checklist[i][j+1][0]-1 == checklist[i][j][0]): 
+                alist[i][j] = 2
+    for i in range(len(checklist)):
+        for j in range(1,len(checklist[i])-1):
+            if (checklist[i][j-1][1] == checklist[i][j][1]-1 and checklist[i][j+1][0]+1 == checklist[i][j][0])\
+               or (checklist[i][j-1][1] == checklist[i][j][1]+1 and checklist[i][j+1][0]-1 == checklist[i][j][0])\
+               or (checklist[i][j-1][0] == checklist[i][j][0]-1 and checklist[i][j+1][1]-1 == checklist[i][j][1])\
+               or (checklist[i][j-1][0] == checklist[i][j][0]+1 and checklist[i][j+1][1]+1 == checklist[i][j][1]): 
+                alist[i][j] = 1
+    for i in range(len(alist)):
+        alist[i][-1] = i+10
+        alist[i].pop(0)
+    for i in range(len(alist[0])-1):
+        mark = []
+        mark2 = []
+        for j in range(len(alist)):
+            if alist[j][i] == 1 and alist[j][-1] != 0:
+                mark.append(j)
+            if alist[j][i] == 2 and alist[j][-1] != 0:
+                mark2.append(j)
+        if mark != []:
+            for i in range(len(checklist)):
+                if i not in mark:
+                    alist[i][-1] = 0
+        elif mark == [] and mark2 != []:
+            for i in range(len(checklist)):
+                if i not in mark2:
+                    alist[i][-1] = 0
+    for i in alist:
+        if i[-1] != 0:
+            checklist[i[-1]-10].pop(0)
+            return checklist[i[-1]-10]
+
+            
+            
+    
+    
+            
+
+provided_input = input('Enter one integer: ')
+try:
+    seed_arg = int(provided_input)
+except:
+    print('Incorrect input, giving up.')
+    sys.exit()
+    
+seed(seed_arg)
+# We fill the grid with randomly generated 0s and 1s,
+# with for every cell, a probability of 1/2 to generate a 0.
+for i in range(dim):
+    for j in range(dim):
+        grid[i][j] = randint(0, 1)
+print('Here is the grid that has been generated:')
+display_grid()
+
+path = leftmost_longest_path_from_top_left_corner()
+if not path:
+    print('There is no path from the top left corner')
+else:
+    print('The leftmost longest path from the top left corner is {}'.format(path))
+           
