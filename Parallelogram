@@ -1,0 +1,63 @@
+import math
+import sys
+class Point:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+class Line:
+    def __init__(self,point_1,point_2):
+        if point_1.x != point_2.x or point_1.y != point_2.y:
+            self.point_1 = point_1
+            self.point_2 = point_2
+            if point_1.x != point_2.x:
+                self.k = (point_1.y - point_2.y)/(point_1.x - point_2.x)
+                self.b = point_1.y - self.k*self.point_1.x
+            else:
+                self.k = 99999999999
+                self.b = 99999999999
+        else:   
+            print('Cannot create line')
+            sys.exit()
+class Parallelogram:
+    def __init__(self,line1,line2,line3,line4):
+            if (line1.k == line2.k and line3.k == line4.k and line1.k != line3.k and line1 != line2 and line3 != line4)\
+            or (line1.k == line3.k and line2.k == line4.k and line1.k != line2.k and line1 != line3 and line2 != line4)\
+            or (line1.k == line4.k and line2.k == line3.k and line1.k != line2.k and line1 != line4 and line2 != line3):            
+                self.side = [line1,line2,line3,line4]
+                self.line1 = line1
+                self.line2 = line2
+                self.line3 = line3
+                self.line4 = line4
+            else:
+                print('Cannot create parallelogram')
+                sys.exit()
+                
+    def divides_into_two_parallelograms(self,line):
+        try:
+            alist = []
+
+            for i in self.side:
+                if i.k == line.k:
+                    alist.append(i.b)
+            if alist[0] > line.b > alist[1] or alist[1] > line.b > alist[0] or line.b == 99999999999:
+                print(True)
+            else:
+                raise
+        except:
+            print(False)
+##line1 = Line(Point(-2,5),Point(6,1))
+##line2 = Line(Point(0,6),Point(-1,0))
+##line3 = Line(Point(2,-1),Point(3,5))
+##line4 = Line(Point(-3,3),Point(1,1))
+#line = Line(Point(4,8),Point(4,8))
+line1 = Line(Point(0,5),Point(0,0))
+line2 = Line(Point(3,5),Point(3,0))
+line3 = Line(Point(0,0),Point(3,0))
+line4 = Line(Point(0,5),Point(6,5))
+line = Line(Point(1,1),Point(400,1))
+parallelogram = Parallelogram(line1,line2,line3,line1)
+parallelogram.divides_into_two_parallelograms(line)
+
+            
+        
+        
